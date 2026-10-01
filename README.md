@@ -43,6 +43,61 @@ bash scripts/build_frontend.sh
 | `GENERATION_MAX_WORDS` | `320` | Target maximum length (prompt guidance) |
 | `AUDIT_DB_PATH` | `./data/audit.db` | SQLite audit log path |
 
+## Deploy on Vercel
+
+This repo includes a `vercel.json` that runs **FastAPI as a serverless function** and serves the built UI from `frontend/dist/`.
+
+### Prerequisites
+
+- [Vercel account](https://vercel.com) and [Vercel CLI](https://vercel.com/docs/cli) (`npm i -g vercel`)
+- **OpenAI API key** in Vercel project settings
+- **Pro plan (recommended):** generation + brand-voice can take **15–60s**. Hobby functions time out at **10s**; `vercel.json` sets `maxDuration: 60`, which requires Pro on Vercel.
+
+### Steps
+
+1. Build the UI locally once to verify (optional):
+
+   ```bash
+   bash scripts/build_frontend.sh
+   ```
+
+2. From the project root:
+
+   ```bash
+   vercel login
+   vercel
+   ```
+
+   Follow prompts to link or create a project.
+
+3. In the [Vercel dashboard](https://vercel.com/dashboard) → your project → **Settings → Environment Variables**, add at least:
+
+   | Name | Example |
+   |------|---------|
+   | `OPENAI_API_KEY` | `sk-...` |
+   | `OPENAI_MODEL` | `gpt-4o-mini` |
+   | `BRAND_VOICE_THRESHOLD` | `80` |
+   | `LLM_TIMEOUT_SECONDS` | `30` |
+   | `AUDIT_DB_PATH` | `/tmp/audit.db` |
+
+4. Deploy production:
+
+   ```bash
+   vercel --prod
+   ```
+
+Each deploy runs `scripts/build_frontend.sh` and installs `requirements-vercel.txt`.
+
+### Vercel caveats
+
+- **SQLite audit log** on `/tmp` is **not durable** across cold starts or multiple regions. Fine for demos; use Postgres/Turso for real persistence.
+- **Single serverless entry** handles both `/api/*` and static files (see `app/main.py`).
+- If deploy fails on Python version, ensure `runtime.txt` matches a [Vercel-supported Python](https://vercel.com/docs/functions/runtimes/python).
+
+### Git integration
+
+Connect the GitHub repo in Vercel; pushes to `main` auto-deploy. Set the same environment variables in the dashboard for Production (and Preview if needed).
+
 ## Run backend (+ UI)
 
 ```bash
