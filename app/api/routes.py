@@ -11,6 +11,11 @@ router = APIRouter()
 _audit = AuditStore()
 
 
+@router.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 def _pipeline() -> BrandVoiceGatePipeline:
     llm = OpenAILLMClient()
     return BrandVoiceGatePipeline(

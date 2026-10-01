@@ -4,5 +4,8 @@ __pycache__/
 .env
 data/
 frontend/dist/
+public/
 .pytest_cache/
 .DS_Store
+.vercel
+.env*

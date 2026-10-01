@@ -91,7 +91,8 @@ Each deploy runs `scripts/build_frontend.sh` and installs `requirements-vercel.t
 ### Vercel caveats
 
 - **SQLite audit log** on `/tmp` is **not durable** across cold starts or multiple regions. Fine for demos; use Postgres/Turso for real persistence.
-- **Single serverless entry** handles both `/api/*` and static files (see `app/main.py`).
+- **Static UI** is copied to `public/` at build time and served by Vercel CDN.
+- **API** routes go to `api/index.py` (FastAPI). Test with `GET /api/health` → `{"status":"ok"}`.
 - If deploy fails on Python version, ensure `runtime.txt` matches a [Vercel-supported Python](https://vercel.com/docs/functions/runtimes/python).
 
 ### Git integration
