@@ -78,7 +78,7 @@ This repo includes a `vercel.json` that runs **FastAPI as a serverless function*
    | `OPENAI_MODEL` | `gpt-4o-mini` |
    | `BRAND_VOICE_THRESHOLD` | `80` |
    | `LLM_TIMEOUT_SECONDS` | `30` |
-   | `AUDIT_DB_PATH` | `/tmp/audit.db` |
+   | `AUDIT_DB_PATH` | `/tmp/audit.db` (auto-forced on Vercel if you set `./data/...`) |
 
 4. Deploy production:
 
@@ -91,8 +91,8 @@ Each deploy runs `scripts/build_frontend.sh` and installs `requirements-vercel.t
 ### Vercel caveats
 
 - **SQLite audit log** on `/tmp` is **not durable** across cold starts or multiple regions. Fine for demos; use Postgres/Turso for real persistence.
-- **Static UI** is copied to `public/` at build time and served by Vercel CDN.
-- **API** routes go to `api/index.py` (FastAPI). Test with `GET /api/health` → `{"status":"ok"}`.
+- **FastAPI entrypoint** is `app.main:app` (see `pyproject.toml` → `[tool.vercel]`).
+- **Static UI** is bundled via `frontend/dist` (and `public/` copy). Test API: `GET /api` or `GET /api/health`.
 - If deploy fails on Python version, ensure `runtime.txt` matches a [Vercel-supported Python](https://vercel.com/docs/functions/runtimes/python).
 
 ### Git integration

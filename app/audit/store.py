@@ -5,13 +5,22 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from app.config import settings
+from app.config import _running_on_vercel, settings
 from app.models.schemas import AuditRecord, BrandVoiceResult, Decision, GenerationResult, HardRulesResult
 
 
-def _ensure_db(path: str) -> None:
+def _audit_db_path() -> str:
+    path = settings.audit_db_path
+    if _running_on_vercel() and not path.startswith("/tmp"):
+        return "/tmp/audit.db"
+    return path
+
+
+def _ensure_db() -> None:
+    path = _audit_db_path()
     p = Path(path)
-    p.parent.mkdir(parents=True, exist_ok=True)
+    if p.parent != Path(".") and str(p.parent) != "/tmp":
+        p.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(path) as conn:
         conn.execute(
             """
@@ -27,8 +36,9 @@ def _ensure_db(path: str) -> None:
 
 @contextmanager
 def _connect():
-    _ensure_db(settings.audit_db_path)
-    conn = sqlite3.connect(settings.audit_db_path)
+    path = _audit_db_path()
+    _ensure_db()
+    conn = sqlite3.connect(path)
     try:
         yield conn
     finally:

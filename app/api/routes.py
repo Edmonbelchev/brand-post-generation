@@ -11,6 +11,20 @@ router = APIRouter()
 _audit = AuditStore()
 
 
+@router.get("")
+@router.get("/")
+async def api_root() -> dict[str, object]:
+    return {
+        "status": "ok",
+        "endpoints": {
+            "health": "GET /api/health",
+            "generate": "POST /api/generate",
+            "validate": "POST /api/validate",
+            "audit": "GET /api/audit/{id}",
+        },
+    }
+
+
 @router.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}

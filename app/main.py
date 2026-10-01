@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -19,7 +18,8 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 
-# On Vercel, static files are served from /public; only mount locally.
 _frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
-if os.environ.get("VERCEL") != "1" and _frontend_dist.is_dir():
-    app.mount("/", StaticFiles(directory=str(_frontend_dist), html=True), name="frontend")
+_public_dir = Path(__file__).resolve().parent.parent / "public"
+_static_dir = _frontend_dist if _frontend_dist.is_dir() else _public_dir
+if _static_dir.is_dir():
+    app.mount("/", StaticFiles(directory=str(_static_dir), html=True), name="frontend")

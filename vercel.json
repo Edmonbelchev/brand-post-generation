@@ -3,14 +3,9 @@
   "buildCommand": "bash scripts/build_frontend.sh",
   "installCommand": "pip install -r requirements-vercel.txt",
   "functions": {
-    "api/index.py": {
-      "maxDuration": 60
+    "index.py": {
+      "maxDuration": 60,
+      "includeFiles": "frontend/dist/**"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
-    }
-  ]
+  }
 }
