@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driftwood — Brand Voice Gate</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="brand-lockup">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 18h22c2.2 0 4 1.8 4 4v2c0 5-4 9-9 9H14c-3.3 0-6-2.7-6-6V18z" stroke="currentColor"
+              stroke-width="2" stroke-linejoin="round" />
+            <path d="M36 20h2c2.2 0 4 1.8 4 4v1c0 2.2-1.8 4-4 4h-2" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" />
+            <path d="M14 36h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path class="cup-handle" d="M8 22v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <div class="steam steam-idle">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow">Driftwood Coffee</p>
+          <h1>Brand Voice Gate</h1>
+        </div>
+      </div>
+      <p class="subtitle">
+        Draft social copy, enforce non-negotiable rules in code, score brand voice, then decide —
+        without letting the model choose what ships.
+      </p>
+    </header>
+
+    <main class="layout">
+      <section class="card card-input">
+        <label for="topic">Content topic</label>
+        <textarea id="topic" rows="3" placeholder="Why freshly roasted coffee tastes different"></textarea>
+        <div class="input-actions">
+          <button id="generate" type="button">
+            <span class="btn-label">Generate &amp; Validate</span>
+            <span class="btn-spinner hidden" aria-hidden="true"></span>
+          </button>
+          <p class="hint">Deterministic rules always run before brand voice scoring.</p>
+        </div>
+        <p id="error" class="error hidden" role="alert"></p>
+      </section>
+
+      <div id="generating" class="card generating hidden" aria-live="polite" aria-busy="false">
+        <div class="generating-inner">
+          <div class="brew-visual" aria-hidden="true">
+            <div class="brand-icon brand-icon-lg">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 18h22c2.2 0 4 1.8 4 4v2c0 5-4 9-9 9H14c-3.3 0-6-2.7-6-6V18z" stroke="currentColor"
+                  stroke-width="2" stroke-linejoin="round" />
+                <path d="M36 20h2c2.2 0 4 1.8 4 4v1c0 2.2-1.8 4-4 4h-2" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" />
+                <path d="M14 36h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              <div class="steam steam-active">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div class="generating-copy">
+            <p class="generating-title" id="generating-title">Drafting post</p>
+            <p class="generating-sub" id="generating-sub">Warming up the copy…</p>
+          </div>
+        </div>
+        <ol class="pipeline-steps" id="pipeline-steps">
+          <li class="pipeline-step" data-step="draft">LLM draft</li>
+          <li class="pipeline-step" data-step="hard">Hard rules</li>
+          <li class="pipeline-step" data-step="voice">Brand voice</li>
+          <li class="pipeline-step" data-step="decide">Decision</li>
+        </ol>
+      </div>
+
+      <section class="card card-post">
+        <div class="post-header">
+          <h2>Generated post</h2>
+          <p id="edit-hint" class="edit-hint hidden">Edits require re-validation before publish.</p>
+        </div>
+        <div id="post-editor-shell" class="editor-shell is-disabled">
+          <div class="editor-toolbar" role="toolbar" aria-label="Post editor tools">
+            <div class="editor-toolbar-group editor-stats" aria-live="polite">
+              <span id="post-word-count">0 words</span>
+              <span class="editor-stat-sep" aria-hidden="true">·</span>
+              <span id="post-char-count">0 characters</span>
+            </div>
+            <div class="editor-toolbar-group editor-tools">
+              <button type="button" class="tool-btn tool-btn-icon" id="tool-bold" disabled
+                title="Bold (⌘B)"><strong>B</strong></button>
+              <button type="button" class="tool-btn tool-btn-icon" id="tool-italic" disabled
+                title="Italic (⌘I)"><em>I</em></button>
+              <button type="button" class="tool-btn tool-btn-icon" id="tool-underline" disabled
+                title="Underline (⌘U)"><span class="u-mark">U</span></button>
+              <button type="button" class="tool-btn" id="tool-link" disabled title="Insert link">Link</button>
+              <button type="button" class="tool-btn" id="tool-clear-format" disabled title="Clear formatting">Clear
+                fmt</button>
+              <span class="tool-sep" aria-hidden="true"></span>
+              <button type="button" class="tool-btn" id="tool-undo" disabled title="Undo (⌘Z)">Undo</button>
+              <button type="button" class="tool-btn" id="tool-redo" disabled title="Redo (⇧⌘Z)">Redo</button>
+              <span class="tool-sep" aria-hidden="true"></span>
+              <button type="button" class="tool-btn" id="tool-paragraph" disabled title="New paragraph">¶ Break</button>
+              <button type="button" class="tool-btn" id="tool-select-all" disabled title="Select all">Select
+                all</button>
+              <button type="button" class="tool-btn" id="tool-copy" disabled title="Copy">Copy</button>
+            </div>
+          </div>
+          <div id="post-wrap" class="post-wrap">
+            <div id="post" class="post-editor muted" contenteditable="false" role="textbox" aria-multiline="true"
+              spellcheck="true" data-placeholder="Enter a topic and run the gate to see editable draft copy here.">
+            </div>
+          </div>
+          <div class="editor-footer">
+            <span id="editor-status" class="editor-status muted">No draft yet</span>
+            <span class="editor-kbd-hint muted">⌘B/I/U · ⌘↵ generate · validation uses visible text</span>
+          </div>
+        </div>
+        <div class="post-actions">
+          <button id="revalidate" type="button" class="btn-secondary hidden" disabled>
+            Re-validate edited copy
+          </button>
+        </div>
+      </section>
+
+      <section class="card card-validation" id="validation-card">
+        <h2>Validation</h2>
+        <ul id="checks" class="checks checks-empty">
+          <li class="checks-placeholder muted">Checks appear after each run.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>Recent decisions</h2>
+        <ul id="history" class="history muted">
+          <li class="history-placeholder">No decisions yet.</li>
+        </ul>
+      </section>
+
+      <section class="card decision-card decision-card-bottom" id="decision-card">
+        <div class="decision-hero">
+          <p class="decision-label">Final decision</p>
+          <div id="decision" class="decision decision-idle">—</div>
+          <p id="decision-hint" class="decision-hint muted">Waiting for a run</p>
+        </div>
+        <div id="reasons-panel" class="decision-reasons hidden">
+          <p class="decision-reasons-heading">Why this didn’t publish</p>
+          <div id="reasons" class="reasons"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+
+</html>
