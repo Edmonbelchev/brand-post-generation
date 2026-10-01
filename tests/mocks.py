@@ -24,7 +24,13 @@ class MockLLMClient(LLMClient):
         timeout: float | None = None,
         max_tokens: int | None = None,
     ) -> tuple[dict[str, Any] | None, str | None]:
-        if "evaluate" in system.lower() or "Score from 0-100" in system:
+        sys_lower = system.lower()
+        is_evaluator = (
+            "you score how well copy matches" in sys_lower
+            or "score rubric" in sys_lower
+            or ("brand voice" in sys_lower and '"score"' in system)
+        )
+        if is_evaluator:
             self.evaluate_calls += 1
             if self.evaluate_response is not None:
                 return self.evaluate_response

@@ -2,23 +2,34 @@ from app.config import settings
 from app.llm.client import LLMClient
 from app.models.schemas import BrandVoiceResult
 
-EVALUATOR_SYSTEM = """You evaluate whether copy matches the Driftwood coffee brand voice.
+EVALUATOR_SYSTEM = """You score how well copy matches Driftwood Coffee's brand voice.
 
-Driftwood is warm, plain-spoken, slightly dry, conversational — like a person, not a billboard.
+Driftwood voice: warm, plain-spoken, slightly dry, conversational — a person talking, not a billboard or brochure.
 
-Score from 0-100 how well the post matches that voice on:
-- warmth
-- plain language
-- conversational tone
-- subtle dry personality
-- not sounding like generic marketing
+## Score rubric (use the full range)
+- **90–100**: Sounds like a calm, witty friend who knows coffee. Simple words, natural rhythm, subtle dry edge. Not salesy.
+- **80–89**: Clearly on-brand; minor polish issues only (slightly formal word here or there).
+- **70–79**: Warm but too poetic, formal, elaborate, or "marketing blog" — enthusiasm or adjectives outweigh plain speech.
+- **50–69**: Mostly generic brand/marketing copy.
+- **Below 50**: Wrong tone entirely.
 
-Do NOT decide publish/reject on legal or policy rules; only brand voice fit.
+## What to reward
+- Concrete, useful details stated simply
+- Understatement and even tone
+- Sentences you might say out loud without cringing
+
+## What to penalize (each major issue often caps the score around 70–75)
+- Poetic/literary phrasing, metaphor stacks, flowery descriptions
+- Marketing buzzwords (discover, elevate, journey, indulge, experience, perfect, premium, passionate)
+- Corporate or billboard cadence ("At Driftwood, we…" as hype)
+- Cheerleading enthusiasm instead of dry warmth
+
+Policy/legal rules (claims, competitors, etc.) are handled elsewhere — score voice only.
 
 Respond with JSON only:
 {
   "score": <integer 0-100>,
-  "feedback": ["<optional short notes>"]
+  "feedback": ["<1-3 short, specific notes; say what to simplify if below 80>"]
 }"""
 
 
@@ -30,7 +41,10 @@ class BrandVoiceEvaluator:
     async def evaluate(self, post: str) -> BrandVoiceResult:
         data, err = await self._llm.chat_json(
             system=EVALUATOR_SYSTEM,
-            user=f"Post to evaluate:\n\n{post}",
+            user=(
+                "Evaluate visible text only (formatting tags already removed).\n\n"
+                f"Post:\n\n{post}"
+            ),
         )
         if err:
             return BrandVoiceResult(passed=False, error=err, feedback=[err])

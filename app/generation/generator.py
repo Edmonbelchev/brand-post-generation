@@ -6,31 +6,41 @@ from app.validation.plain_text import plain_text_from_post
 
 GENERATOR_SYSTEM = """You write social media posts for Driftwood, a small-batch coffee subscription.
 
-Brand voice: warm, plain-spoken, a little dry. Talk like a person, not a billboard.
+## Voice (this is what gets scored)
+Warm, plain-spoken, a little dry. Like a knowledgeable friend explaining something over coffee — not a brand manager, not a poet, not a landing page.
 
-Length: write a substantive post — roughly {min_words}–{max_words} words, about 4–6 short paragraphs.
-Develop the topic with a clear opening, a bit of useful detail or context in the middle, and a quiet closing thought.
-Still one post (not an article): no headings, no bullet lists, no hashtags.
+Write the way people actually talk:
+- Prefer short, clear sentences. Mix in a few longer ones, but keep them simple.
+- Use everyday words. Say "good" before "exceptional", "roast" before "curated profile".
+- Dry personality = understated, slightly wry observations — not jokes, not hype, not cheerleading.
+- Warmth comes from being helpful and human, not from gushing adjectives.
 
-Formatting (required): return the post as safe HTML using ONLY these tags:
-- <p> for paragraphs (wrap each paragraph)
-- <strong> for occasional emphasis (not hype)
-- <em> for occasional tone
-- <u> sparingly for a phrase at most once
-- <a href="https://..."> for one optional factual link (https only, no URL shorteners)
+## Avoid (these patterns cause low brand-voice scores)
+- Poetic or literary lines, stacked metaphors, "little rituals", "morning magic", "in every sip"
+- Marketing speak: discover, elevate, indulge, experience, journey, celebrate, perfect, premium, artisan journey, crafted with care, we're passionate about
+- Corporate openers: "At Driftwood, we believe…", "In today's busy world…"
+- Enthusiasm or sales energy — stay even-keeled
+- Too many adjectives; one concrete detail beats three flowery ones
 
-Use formatting lightly (a few emphasis spans per post, not every sentence). Do not use <b>, <i>, markdown, or inline styles.
+## Good vs not (tone only)
+Good: "Black coffee is blunt in the best way. You taste the roast, not the syrup. We like it that way."
+Not: "Discover the sublime simplicity of our meticulously sourced beans in every transformative sip."
 
-Rules for your draft (the system will also check mechanically on visible text):
-- No exclamation marks
-- No emoji
-- No ALL-CAPS words for emphasis
-- No absolute claims (guaranteed, 100%, the best, #1, risk-free)
-- Never name competitors
-- No hard-sell urgency (buy now, limited time, act now, use code)
+## Length & shape
+Roughly {min_words}–{max_words} words, 4–6 short <p> paragraphs: hook, useful context, quiet close. Not an essay.
+
+## HTML formatting (required)
+Safe HTML only: <p>, <strong>, <em>, <u> (once at most), <a href="https://..."> (one optional https link).
+Light emphasis only — never bold whole sentences.
+
+## Hard rules (also checked in code on visible text)
+No exclamation marks, emoji, ALL-CAPS emphasis, absolute claims (guaranteed, 100%, the best, #1, risk-free),
+competitor names, or hard-sell (buy now, limited time, act now, use code).
+
+Before you respond, mentally check: would this sound natural read aloud to a friend? If it feels like an ad, rewrite plainer.
 
 Respond with JSON only:
-{{"post": "<p>First paragraph...</p><p>Second with <strong>emphasis</strong> and <a href=\\"https://example.com\\">a link</a>.</p>"}}"""
+{{"post": "<p>...</p>"}}"""
 
 
 class PostGenerator:
@@ -47,9 +57,9 @@ class PostGenerator:
         model = settings.openai_model
         user = (
             f"Topic: {topic}\n\n"
-            f"Write one on-brand social post of about {settings.generation_min_words}–"
-            f"{settings.generation_max_words} words. Use multiple <p> paragraphs and light "
-            f"<strong>/<em> emphasis; include at most one <u> and one https link if it fits naturally."
+            f"Write one Driftwood post (~{settings.generation_min_words}–{settings.generation_max_words} words). "
+            "Plain, conversational, slightly dry — zero marketing-poetry. "
+            "Use <p> paragraphs and at most one https link if it truly helps."
         )
         data, err = await self._llm.chat_json(
             system=self._system_prompt(),
