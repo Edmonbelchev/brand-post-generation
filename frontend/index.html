@@ -122,6 +122,16 @@
               spellcheck="true" data-placeholder="Enter a topic and run the gate to see editable draft copy here.">
             </div>
           </div>
+          <div id="link-popover" class="link-popover hidden" role="dialog" aria-labelledby="link-popover-title"
+            aria-modal="false">
+            <p id="link-popover-title" class="link-popover-title">Link in post</p>
+            <p id="link-popover-url" class="link-popover-url muted"></p>
+            <div class="link-popover-actions">
+              <a id="link-popover-visit" class="link-popover-visit" href="#" target="_blank"
+                rel="noopener noreferrer">Visit URL</a>
+              <button type="button" id="link-popover-close" class="link-popover-close">Close</button>
+            </div>
+          </div>
           <div class="editor-footer">
             <span id="editor-status" class="editor-status muted">No draft yet</span>
             <span class="editor-kbd-hint muted">⌘B/I/U · ⌘↵ generate · validation uses visible text</span>

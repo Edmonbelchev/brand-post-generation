@@ -579,6 +579,90 @@ button:disabled {
   text-underline-offset: 2px;
 }
 
+.post-editor a.post-link {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.post-editor a.post-link::after {
+  content: " ↗";
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.post-editor a.post-link-active {
+  background: rgba(45, 90, 61, 0.12);
+  border-radius: 3px;
+  outline: 1px solid rgba(45, 90, 61, 0.35);
+}
+
+.link-popover {
+  position: fixed;
+  z-index: 200;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fffdf8;
+  box-shadow: 0 10px 28px rgba(45, 32, 22, 0.14);
+}
+
+.link-popover.hidden {
+  display: none;
+}
+
+.link-popover-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brown-600);
+}
+
+.link-popover-url {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.link-popover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.link-popover-visit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  background: var(--green-700);
+}
+
+.link-popover-visit:hover {
+  background: var(--green-800, #1e4d32);
+}
+
+.link-popover-close {
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.35rem 0.4rem;
+}
+
+.link-popover-close:hover {
+  color: var(--text);
+}
+
 .tool-btn-icon {
   min-width: 2rem;
   padding-inline: 0.35rem;

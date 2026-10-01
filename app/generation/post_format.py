@@ -14,6 +14,8 @@ class _PostHTMLSanitizer(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self._out: list[str] = []
+        self._anchor_href: str | None = None
+        self._anchor_has_visible_text = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag = tag.lower()
@@ -27,6 +29,8 @@ class _PostHTMLSanitizer(HTMLParser):
             href = attr_map.get("href", "").strip()
             if not re.match(r"^https?://", href, re.I):
                 return
+            self._anchor_href = href
+            self._anchor_has_visible_text = False
             self._out.append(
                 f'<a href="{_escape_attr(href)}" target="_blank" rel="noopener noreferrer">'
             )
@@ -37,9 +41,16 @@ class _PostHTMLSanitizer(HTMLParser):
         tag = tag.lower()
         if tag not in _ALLOWED_TAGS or tag == "br":
             return
+        if tag == "a" and self._anchor_href:
+            if not self._anchor_has_visible_text:
+                self._out.append(escape(self._anchor_href))
+            self._anchor_href = None
+            self._anchor_has_visible_text = False
         self._out.append(f"</{tag}>")
 
     def handle_data(self, data: str) -> None:
+        if self._anchor_href and data.strip():
+            self._anchor_has_visible_text = True
         self._out.append(escape(data))
 
     def handle_entityref(self, name: str) -> None:

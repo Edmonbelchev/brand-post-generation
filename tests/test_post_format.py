@@ -20,6 +20,13 @@ def test_html_sanitized_and_links_kept():
     assert "script" not in out
 
 
+def test_empty_anchor_gets_visible_href_text():
+    raw = '<p>More at <a href="https://driftwood.coffee/roast"></a>.</p>'
+    out = normalize_post_content(raw)
+    assert "https://driftwood.coffee/roast" in out
+    assert plain_text_from_post(out).count("https://driftwood.coffee/roast") == 1
+
+
 def test_validation_uses_visible_text_from_html():
     post = '<p>We are <strong>the best</strong>. <a href="https://x.com">Shop</a></p>'
     plain = plain_text_from_post(post)

@@ -4,6 +4,10 @@ const revalidateBtn = document.getElementById("revalidate");
 const postEl = document.getElementById("post");
 const postWrap = document.getElementById("post-wrap");
 const postEditorShell = document.getElementById("post-editor-shell");
+const linkPopover = document.getElementById("link-popover");
+const linkPopoverUrl = document.getElementById("link-popover-url");
+const linkPopoverVisit = document.getElementById("link-popover-visit");
+const linkPopoverClose = document.getElementById("link-popover-close");
 const postWordCount = document.getElementById("post-word-count");
 const postCharCount = document.getElementById("post-char-count");
 const editorStatus = document.getElementById("editor-status");
@@ -128,6 +132,8 @@ async function hideGeneratingPanelAnimated() {
 }
 
 const editHistory = { stack: [""], index: 0, lock: false };
+let activeLinkInEditor = null;
+const PLAIN_URL_RE = /(https?:\/\/[^\s<>"']+)/gi;
 
 function isEditorDisabled() {
   return postEl.getAttribute("contenteditable") === "false";
@@ -198,6 +204,109 @@ function sanitizePostHtml(html) {
   return template.innerHTML.trim();
 }
 
+function displayLinkLabel(href) {
+  try {
+    const u = new URL(href);
+    const path = u.pathname === "/" ? "" : u.pathname;
+    return `${u.hostname}${path}${u.search || ""}`;
+  } catch {
+    return href;
+  }
+}
+
+function linkifyPlainUrlsInEditor() {
+  const walker = document.createTreeWalker(postEl, NodeFilter.SHOW_TEXT);
+  const toProcess = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.parentElement?.closest("a")) continue;
+    if (PLAIN_URL_RE.test(node.textContent || "")) {
+      toProcess.push(node);
+    }
+    PLAIN_URL_RE.lastIndex = 0;
+  }
+
+  toProcess.forEach((textNode) => {
+    const text = textNode.textContent || "";
+    PLAIN_URL_RE.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    let match;
+    while ((match = PLAIN_URL_RE.exec(text))) {
+      if (match.index > last) {
+        frag.appendChild(document.createTextNode(text.slice(last, match.index)));
+      }
+      const href = match[1];
+      const a = document.createElement("a");
+      a.href = href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "post-link";
+      a.textContent = displayLinkLabel(href);
+      frag.appendChild(a);
+      last = match.index + href.length;
+    }
+    if (last < text.length) {
+      frag.appendChild(document.createTextNode(text.slice(last)));
+    }
+    if (frag.childNodes.length) {
+      textNode.replaceWith(frag);
+    }
+  });
+}
+
+function normalizeEditorLinks() {
+  linkifyPlainUrlsInEditor();
+  postEl.querySelectorAll("a[href]").forEach((anchor) => {
+    const href = (anchor.getAttribute("href") || "").trim();
+    if (!/^https?:\/\//i.test(href)) return;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    anchor.classList.add("post-link");
+    anchor.setAttribute("title", `Open ${href}`);
+    const visible = (anchor.textContent || "").replace(/\u00a0/g, " ").trim();
+    if (!visible) {
+      anchor.textContent = displayLinkLabel(href);
+    }
+  });
+}
+
+function hideLinkPopover() {
+  if (activeLinkInEditor) {
+    activeLinkInEditor.classList.remove("post-link-active");
+    activeLinkInEditor = null;
+  }
+  linkPopover.classList.add("hidden");
+}
+
+function showLinkPopover(anchorEl) {
+  const href = (anchorEl.getAttribute("href") || "").trim();
+  if (!/^https?:\/\//i.test(href)) return;
+
+  if (activeLinkInEditor && activeLinkInEditor !== anchorEl) {
+    activeLinkInEditor.classList.remove("post-link-active");
+  }
+  activeLinkInEditor = anchorEl;
+  anchorEl.classList.add("post-link-active");
+
+  linkPopoverUrl.textContent = href;
+  linkPopoverVisit.href = href;
+  linkPopover.classList.remove("hidden");
+  linkPopover.style.visibility = "hidden";
+
+  const rect = anchorEl.getBoundingClientRect();
+  const popRect = linkPopover.getBoundingClientRect();
+  let top = rect.bottom + 8;
+  let left = rect.left;
+  if (top + popRect.height > window.innerHeight - 8) {
+    top = Math.max(8, rect.top - popRect.height - 8);
+  }
+  left = Math.min(Math.max(8, left), window.innerWidth - popRect.width - 8);
+  linkPopover.style.top = `${top}px`;
+  linkPopover.style.left = `${left}px`;
+  linkPopover.style.visibility = "";
+}
+
 function getPostPlainText() {
   return (postEl.innerText || "").replace(/\u00a0/g, " ").trim();
 }
@@ -266,6 +375,7 @@ function undoEdit() {
   editHistory.index -= 1;
   postEl.innerHTML = editHistory.stack[editHistory.index];
   editHistory.lock = false;
+  normalizeEditorLinks();
   syncPostEmptyState();
   autoResizePost();
   updatePostStats();
@@ -278,6 +388,7 @@ function redoEdit() {
   editHistory.index += 1;
   postEl.innerHTML = editHistory.stack[editHistory.index];
   editHistory.lock = false;
+  normalizeEditorLinks();
   syncPostEmptyState();
   autoResizePost();
   updatePostStats();
@@ -501,9 +612,11 @@ async function completeGeneratingTransition() {
 }
 
 function setPostContent(text, { validated = false } = {}) {
+  hideLinkPopover();
   if (text) {
-    const html = plainTextToEditorHtml(text);
+    const html = sanitizePostHtml(plainTextToEditorHtml(text));
     postEl.innerHTML = html;
+    normalizeEditorLinks();
     setEditorDisabled(false);
     postEl.classList.remove("muted");
     revalidateBtn.classList.remove("hidden");
@@ -832,7 +945,15 @@ revalidateBtn.addEventListener("click", async () => {
 
 postEl.addEventListener("input", onEditorInput);
 
+postEl.addEventListener("click", (e) => {
+  const anchor = e.target.closest("a[href]");
+  if (!anchor || !postEl.contains(anchor)) return;
+  e.preventDefault();
+  showLinkPopover(anchor);
+});
+
 postEl.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") hideLinkPopover();
   const mod = e.metaKey || e.ctrlKey;
   if (mod && e.key === "z" && !e.shiftKey) {
     e.preventDefault();
@@ -872,6 +993,19 @@ toolLink.addEventListener("click", () => {
   const url = window.prompt("Link URL (https://…)", "https://");
   if (!url) return;
   execFormat("createLink", url.trim());
+  normalizeEditorLinks();
+});
+
+linkPopoverClose.addEventListener("click", hideLinkPopover);
+linkPopoverVisit.addEventListener("click", () => {
+  hideLinkPopover();
+});
+
+document.addEventListener("click", (e) => {
+  if (linkPopover.classList.contains("hidden")) return;
+  if (linkPopover.contains(e.target)) return;
+  if (e.target.closest("#post a[href]")) return;
+  hideLinkPopover();
 });
 toolClearFormat.addEventListener("click", () => execFormat("removeFormat"));
 toolUndo.addEventListener("click", undoEdit);
